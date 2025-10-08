@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UdaanBase — Home Design Cost Calculator</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#ff6b6b; --muted:#98a0b3; --glass: rgba(255,255,255,0.03);
+      --glass-2: rgba(255,255,255,0.02);
+      --glass-3: rgba(255,255,255,0.06);
+      --radius:14px;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071029 0%, #071529 50%, #03121a 100%);color:#e6eef8}
+    .container{max-width:1100px;margin:36px auto;padding:28px}
+
+    header{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+    /* UPDATED: Logo CSS adjusted for image display */
+    .logo{
+      width:58px;
+      height:58px;
+      background:transparent; /* Removed gradient background */
+      border-radius:12px;
+      display:grid;
+      place-items:center;
+      box-shadow:0 6px 30px rgba(0,0,0,0.6);
+      padding: 0;
+      overflow: hidden; /* Ensure image stays within bounds */
+    }
+    .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Ensures the image covers the container without distortion */
+    }
+    header h1{font-size:20px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .grid{display:grid;grid-template-columns:1fr 380px;gap:20px}
+
+    /* Left panel */
+    .panel{background:linear-gradient(180deg,var(--card), rgba(6,9,15,0.6));padding:20px;border-radius:var(--radius);box-shadow:0 8px 30px rgba(2,6,12,0.7);backdrop-filter: blur(6px)}
+    .panel h2{margin:0 0 12px 0}
+    .inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .field{background:var(--glass);padding:12px;border-radius:12px;border:1px solid transparent;transition:all .25s}
+    .field:hover{transform:translateY(-4px);border-color:rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(2,6,12,0.6)}
+    label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+    
+    /* General input/select styling */
+    input[type=number], input[type=text], select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;font-size:14px}
+
+    /* Specific styling for the Offers dropdown for readability */
+    #offersSelect {
+      color: #071029; /* Force dark text color for contrast */
+      background-color: #f8f8f8; /* Force light background */
+    }
+
+    .full{grid-column:1/-1}
+    .calc-outputs{display:flex;gap:12px;align-items:center;margin-top:12px}
+    .output strong{display:block;font-size:18px}
+    .plans{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+
+    .plan{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);background:linear-gradient(180deg, rgba(255,255,255,0.01), transparent);transition:transform .25s, box-shadow .2s}
+    .plan:hover{transform:translateY(-6px);box-shadow:0 12px 30px rgba(2,6,12,0.65)}
+    .plan input{margin-right:12px}
+    .plan .meta{font-size:13px;color:var(--muted)}
+    .price-tag{background:linear-gradient(90deg,var(--accent), #ffb46b);padding:8px 12px;border-radius:10px;color:#071029;font-weight:700}
+
+    /* Right panel */
+    .summary{position:sticky;top:36px}
+    .card{padding:18px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border:1px solid rgba(255,255,255,0.03)}
+    .big-price{font-size:28px;font-weight:800;margin:10px 0}
+    .muted{color:var(--muted);font-size:13px}
+
+    .actions{display:flex;gap:10px;margin-top:12px}
+    .btn{flex:1;padding:12px 14px;border-radius:12px;border:0;cursor:pointer;font-weight:700;transition:transform .15s, box-shadow .15s}
+    .btn-primary{background:linear-gradient(90deg,var(--accent), #ffb46b);color:#071029}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit}
+    .btn:hover{transform:translateY(-4px);box-shadow:0 10px 25px rgba(0,0,0,0.5)}
+
+    /* Steps */
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+    .step{padding:10px;border-radius:10px;background:var(--glass-3);text-align:center;border:1px solid rgba(255,255,255,0.02)}
+    .step h4{margin:6px 0 0 0}
+    .step p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
+
+    /* Offers - ADDED BACKGROUND TO MAKE DROPDOWN STAND OUT */
+    .offers{margin-top:14px;display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:rgba(255,107,107,0.03);}
+    .sale-badge{background:rgba(255,107,107,0.12);padding:6px 10px;border-radius:999px;color:var(--accent);font-weight:700}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px;text-align:center}
+
+    /* responsive */
+    @media(max-width:980px){.grid{grid-template-columns:1fr} .summary{position:relative;top:0}}
+
+    /* small fancy touches */
+    .sparkle{position:relative}
+    .sparkle:after{content:'';position:absolute;right:-18px;top:-12px;width:14px;height:14px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,0.9), rgba(255,255,255,0.1));filter:blur(6px);opacity:.7;transform:scale(.6);animation:twinkle 2.6s linear infinite}
+    @keyframes twinkle{0%{transform:scale(.6);opacity:.6}50%{transform:scale(1);opacity:1}100%{transform:scale(.6);opacity:.6}}
+
+    /* animated price change */
+    .price-anim{display:inline-block;transition:transform .35s ease, opacity .25s}
+    .price-anim.bounce{transform:translateY(-6px);opacity:0.95}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <!-- UPDATED: Replaced "UB" text div with an image tag -->
+      <div class="logo">
+        <!-- 🎯🎯 ACTION REQUIRED: Replace the image URL in the 'src' attribute below with the public URL of your logo. 🎯🎯 -->
+        <img 
+          src="logo.jpg" 
+          alt="Company Logo" 
+          onerror="this.onerror=null;this.src='https://placehold.co/58x58/ff6b6b/071029?text=Logo';"
+        />
+      </div>
+      <div>
+        <h1>UdaanBase — Cost Calculator</h1>
+        <p>Beautiful homes within reach · Instant estimate for plans, elevations & packages</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="panel">
+        
+        <!-- MOVED THE 3-STEP CARDS HERE -->
+        <div class="steps" style="margin-bottom: 20px;">
+          <div class="step"><div style="font-size:20px">1</div><h4>Enter Dimensions</h4><p>Feet & inches — precise area</p></div>
+          <div class="step"><div style="font-size:20px">2</div><h4>Select Service </h4><p>Pick Naksha / Elevation / Full</p></div>
+          <div class="step"><div style="font-size:20px">3</div><h4>Send Order</h4><p>Share via WhatsApp with details</p></div>
+        </div>
+        <!-- END MOVED 3-STEP CARDS -->
+
+
+        <h2>Enter plot dimensions</h2>
+        <div class="inputs">
+          <div class="field">
+            <label>Length - Feet</label>
+            <input id="lengthFeet" type="number" min="0" step="1" value="30" />
+          </div>
+          <div class="field">
+            <label>Length - Inches</label>
+            <input id="lengthInch" type="number" min="0" max="11" step="1" value="0" />
+          </div>
+          <div class="field">
+            <label>Width - Feet</label>
+            <input id="widthFeet" type="number" min="0" step="1" value="20" />
+          </div>
+          <div class="field">
+            <label>Width - Inches</label>
+            <input id="widthInch" type="number" min="0" max="11" step="1" value="0" />
+          </div>
+
+          <div class="field full">
+            <label>Your Name</label>
+            <input id="clientName" type="text" placeholder="e.g. Himanshu Kumar" />
+          </div>
+          <div class="field full">
+            <label>Your Phone (for WhatsApp)</label>
+            <!-- Pattern restriction remains in place -->
+            <input id="clientPhone" type="text" pattern="[+\d\s]{8,}" title="Phone must contain at least 8 digits, plus sign (+), or spaces." placeholder="e.g. +91 70615 70522" />
+          </div>
+        </div>
+
+        <div class="plans" id="plansList">
+          <label style="color:var(--muted);font-size:13px">Choose a service</label>
+          <label class="plan"><div><input type="radio" name="plan" value="1" checked /> <strong>Naksha (2D Floor Plan)</strong><div class="meta">₹2 / sq.ft · Min ₹999 · Max ₹1999</div></div><div class="price-tag">₹2</div></label>
+          <label class="plan"><div><input type="radio" name="plan" value="2" /> <strong>Naksha + 3D Front Elevation</strong><div class="meta">₹3 / sq.ft · Min ₹1499 · Max ₹2999</div></div><div class="price-tag">₹3</div></label>
+          <label class="plan"><div><input type="radio" name="plan" value="3" /> <strong>Full Combo: Naksha + 3D + Structural</strong><div class="meta">₹5 / sq.ft · Min ₹1999 · Max ₹4999</div></div><div class="price-tag">₹5</div></label>
+        </div>
+
+        <div class="offers">
+          <div class="sale-badge">Current Offers</div>
+          <select id="offersSelect">
+            <!-- Options populated by JS -->
+          </select>
+          <div style="margin-left:auto;color:var(--muted);font-size:13px">✨ Snatch our Diwali offer now and turn your dream home into reality before it’s gone! 🏠💫</div>
+        </div>
+        
+        <!-- Error Message Display Area -->
+        <div style="margin-top:14px;color:var(--accent);font-weight:600;font-size:14px;min-height:20px" id="errorMessage"></div>
+
+
+        <div style="margin-top:4px;display:flex;gap:10px">
+          <button class="btn btn-ghost" id="resetBtn">Reset</button>
+          <button class="btn btn-primary" id="calcBtn">Calculate Price</button>
+        </div>
+
+      </div>
+
+      <aside class="summary">
+        <div class="card">
+          <h3>Estimate Summary</h3>
+          <div class="muted">Preview of price before you send</div>
+
+          <div style="margin-top:12px">
+            <div class="muted">Area (sq.ft)</div>
+            <div class="big-price"><span id="areaNum">0</span> <span style="font-size:14px;color:var(--muted)">sq.ft</span></div>
+
+            <div class="muted">Base Price</div>
+            <div style="font-size:18px;margin-top:6px"><span class="price-anim" id="basePrice">₹0</span></div>
+
+            <div class="muted" style="margin-top:8px">Applied Caps</div>
+            <div style="display:flex;gap:8px;margin-top:6px"><div class="muted">Min: <strong id="minCap">₹0</strong></div><div class="muted">Max: <strong id="maxCap">₹0</strong></div></div>
+
+            <div class="muted" style="margin-top:10px">Offer</div>
+            <div style="font-weight:700;margin-top:6px" id="offerText">—</div>
+
+            <div style="margin-top:12px;border-radius:10px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.015), transparent);border:1px solid rgba(255,255,255,0.03)">
+              <div class="muted">Final Price</div>
+              <div style="font-size:26px;margin-top:6px"><span id="finalPrice">₹0</span></div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary" id="whatsappBtn">Send via WhatsApp</button>
+              <button class="btn btn-ghost" id="downloadBtn">Download Summary</button>
+            </div>
+
+            <div style="margin-top:12px;color:var(--muted);font-size:13px"></div>
+          ✨ This Diwali, make your dream home a reality! Grab our special festive offer now and enjoy amazing savings before it ends! 🏠💫 </div>
+        </div>
+        
+        <!-- The old 'How to use' card content has been removed from here -->
+
+      </aside>
+    </div>
+
+    <footer>UdaanBase · Beautiful Homes Within Reach</footer>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    // Replace this phone with your WhatsApp Business number in international format (no + or 00)
+    // Example: '917061570522'
+    const BUSINESS_NUMBER = '917061570522'; // <-- replace with your number
+
+    // Offer options are also editable here. Each item is {label, percent}
+    const OFFERS = [
+      {label: '— No offer —', percent: 0},
+      {label: 'Festive Offer — 10% off', percent: 10},
+      {label: 'Grand Festival Offer — 11% off (Diwali Special)', percent: 11}, // Confirmed to be present
+      
+    ];
+
+    // Plan definitions
+    const PLANS = {
+      1: {name: 'Naksha (2D Floor Plan Only)', rate: 2, min: 999, max:1999},
+      2: {name: 'Naksha + 3D Front Elevation', rate: 3, min:1499, max:2999},
+      3: {name: 'Full Combo: Naksha + 3D + Structural Design', rate:5, min:1999, max:4999}
+    };
+
+    // ====== DOM ======
+    const lengthFeet = document.getElementById('lengthFeet');
+    const lengthInch = document.getElementById('lengthInch');
+    const widthFeet = document.getElementById('widthFeet');
+    const widthInch = document.getElementById('widthInch');
+    // Removed areaSq and selectedPlan elements from DOM, so removed these variables:
+    // const areaSq = document.getElementById('areaSq'); 
+    const areaNum = document.getElementById('areaNum');
+    // const selectedPlan = document.getElementById('selectedPlan'); 
+    const basePriceEl = document.getElementById('basePrice');
+    const minCapEl = document.getElementById('minCap');
+    const maxCapEl = document.getElementById('maxCap');
+    const offerText = document.getElementById('offerText');
+    const finalPriceEl = document.getElementById('finalPrice');
+    const offersSelect = document.getElementById('offersSelect');
+    const calcBtn = document.getElementById('calcBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const whatsappBtn = document.getElementById('whatsappBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const clientName = document.getElementById('clientName');
+    const clientPhone = document.getElementById('clientPhone');
+    const errorMessageEl = document.getElementById('errorMessage'); // Added error message DOM element
+
+    // Utility: Display error messages without using alert()
+    function displayError(message) {
+      errorMessageEl.textContent = message;
+      errorMessageEl.style.display = 'block';
+      setTimeout(() => {
+        errorMessageEl.textContent = '';
+        errorMessageEl.style.display = 'none';
+      }, 5000);
+    }
+
+    // Populate offers select dynamically (so you can edit OFFERS easily)
+    (function populateOffers(){
+      offersSelect.innerHTML = '';
+      OFFERS.forEach((o, i)=>{
+        const opt = document.createElement('option');
+        opt.value = o.percent;
+        opt.textContent = o.label;
+        offersSelect.appendChild(opt);
+      });
+    })();
+
+    // Utility: compute area (feet + inches)
+    function computeArea(){
+      const lf = parseFloat(lengthFeet.value) || 0;
+      const li = parseFloat(lengthInch.value) || 0;
+      const wf = parseFloat(widthFeet.value) || 0;
+      const wi = parseFloat(widthInch.value) || 0;
+      const length = lf + (li/12);
+      const width = wf + (wi/12);
+      // Ensure area is non-negative
+      const area = Math.max(0, length * width); 
+      return {length,width,area};
+    }
+
+    function getSelectedPlan(){
+      const radios = document.querySelectorAll('input[name="plan"]');
+      let val = 1;
+      radios.forEach(r=>{if(r.checked) val = r.value});
+      return PLANS[val];
+    }
+
+    function formatINR(v){
+      return '₹'+Number(v).toLocaleString('en-IN',{maximumFractionDigits:0});
+    }
+
+    function calculate(){
+      const {area} = computeArea();
+      const plan = getSelectedPlan();
+      const offerPercent = parseFloat(offersSelect.value) || 0;
+
+      // Base price
+      let base = Math.round(area * plan.rate);
+
+      // Apply caps
+      const minPrice = plan.min;
+      const maxPrice = plan.max;
+      let capped = base;
+      if(capped < minPrice) capped = minPrice;
+      if(capped > maxPrice) capped = maxPrice;
+
+      // Apply offer
+      const discount = Math.round(capped * (offerPercent/100));
+      const final = Math.max(0, capped - discount);
+
+      // update UI (only updating elements still present in the summary section)
+      // areaSq.textContent = area.toFixed(2)+' sq.ft'; // Removed
+      areaNum.textContent = area.toFixed(2);
+      // selectedPlan.textContent = plan.name; // Removed
+
+      // animate price change
+      basePriceEl.classList.remove('bounce');
+      setTimeout(()=>{basePriceEl.textContent = formatINR(base); basePriceEl.classList.add('bounce')},10);
+
+      minCapEl.textContent = formatINR(minPrice);
+      // FIX: Changed the incorrect variable 'maxCap' to the correct variable 'maxPrice'
+      maxCapEl.textContent = formatINR(maxPrice);
+      // Find the label for the selected offer
+      const selectedOfferLabel = OFFERS.find(o => o.percent === offerPercent)?.label || '—';
+      offerText.textContent = selectedOfferLabel;
+      finalPriceEl.textContent = formatINR(final);
+
+      // store current computed values for whatsapp
+      window._UdaanState = {area: area.toFixed(2), plan, base, capped, offerPercent, discount, final};
+    }
+
+    // initial calc
+    calculate();
+
+    // events
+    calcBtn.addEventListener('click', ()=>{
+      calculate();
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      lengthFeet.value = 30; lengthInch.value = 0; widthFeet.value = 20; widthInch.value = 0; clientName.value=''; clientPhone.value=''; offersSelect.value='0'; document.querySelector('input[name="plan"][value="1"]').checked = true; calculate();
+      errorMessageEl.textContent = ''; // Clear error on reset
+    });
+
+    // whenever inputs change, show live area
+    [lengthFeet,lengthInch,widthFeet,widthInch].forEach(el=>el.addEventListener('input', ()=>{
+      const {area} = computeArea();
+      // areaSq.textContent = area.toFixed(2) + ' sq.ft'; // Removed
+      areaNum.textContent = area.toFixed(2);
+    }));
+
+    // WhatsApp send
+    whatsappBtn.addEventListener('click', ()=>{
+      // Ensure calculation is up-to-date
+      calculate(); 
+      const st = window._UdaanState || {};
+      const name = clientName.value.trim();
+      const phone = clientPhone.value.trim();
+
+      // --- Client-side validation ---
+      if (!name || name.length < 3) {
+        displayError('Please enter a valid name (at least 3 characters).');
+        clientName.focus();
+        return;
+      }
+
+      // Simple phone validation (allowing digits, spaces, and optional + sign, min 8 characters)
+      if (!phone || !/^[+\d\s]{8,}$/.test(phone)) {
+        // NOTE: The HTML pattern attribute helps restrict input visually, but we keep this JS check for robustness
+        displayError('Please enter a valid phone number (min 8 characters).');
+        clientPhone.focus();
+        return;
+      }
+      // --- End validation ---
+
+      // Clear any previous error message
+      errorMessageEl.textContent = ''; 
+
+      // Prepare message
+      const lines = [];
+      lines.push('Hi UdaanBase, I want a design estimate.');
+      lines.push('Name: '+name);
+      lines.push('Contact: '+phone);
+      lines.push('Area (sq.ft): '+st.area);
+      lines.push('Selected Plan: '+(st.plan?st.plan.name:'—'));
+      lines.push('Base Price: '+formatINR(st.base || 0));
+      lines.push('Applied after caps: '+formatINR(st.capped || 0));
+      lines.push('Offer: '+(st.offerPercent?st.offerPercent+'% off':'—'));
+      lines.push('Final Price: '+formatINR(st.final || 0));
+      lines.push('\nPlease contact me to proceed.\nThank you!');
+
+      const text = encodeURIComponent(lines.join('\n'));
+
+      // WhatsApp business link
+      // NOTE: Replace BUSINESS_NUMBER at top with your number (without +)
+      const waUrl = 'https://wa.me/+917061570522'+BUSINESS_NUMBER+'?text='+text;
+      window.open(waUrl, '_blank');
+    });
+
+    // Download small summary as text file
+    downloadBtn.addEventListener('click', ()=>{
+      calculate();
+      const st = window._UdaanState || {};
+      const name = clientName.value || '—';
+      const phone = clientPhone.value || '—';
+      const content = `UdaanBase Estimate\n\nName: ${name}\nContact: ${phone}\nArea (sq.ft): ${st.area}\nPlan: ${st.plan?st.plan.name:'—'}\nBase: ${formatINR(st.base || 0)}\nAfter Caps: ${formatINR(st.capped || 0)}\nOffer: ${st.offerPercent}%\nFinal: ${formatINR(st.final || 0)}`;
+      const blob = new Blob([content], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'udaanbase-estimate.txt'; a.click(); URL.revokeObjectURL(url);
+    });
+
+  </script>
+</body>
+</html>
